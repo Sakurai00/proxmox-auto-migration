@@ -1,9 +1,9 @@
-use systemstat::{Platform, System, saturating_sub_bytes};
 use anyhow::Result;
+use systemstat::{saturating_sub_bytes, Platform, System};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let sys = System::new();
+    let _sys = System::new();
 
     // let memory = sys.memory().expect("read error");
     // println!("CPU: {:#?}", memory);
@@ -14,12 +14,11 @@ async fn main() -> Result<()> {
 
     match sys.cpu_temp() {
         Ok(cpu_temp) => println!("\nCPU temp: {}", cpu_temp),
-        Err(x) => println!("\nCPU temp: {}", x)
+        Err(x) => println!("\nCPU temp: {}", x),
     }
 
     Ok(())
 }
-
 
 fn get_mem_ratio() -> Result<f64> {
     let sys = System::new();
@@ -31,6 +30,6 @@ fn get_mem_ratio() -> Result<f64> {
             let ratio = used as f64 / total as f64;
             Ok(ratio)
         }
-        Err(x) => return Err(anyhow::anyhow!("memory error: {}", x))
+        Err(x) => return Err(anyhow::anyhow!("memory error: {}", x)),
     }
 }

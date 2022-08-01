@@ -5,8 +5,15 @@ use systemstat::{saturating_sub_bytes, Platform, System};
 async fn main() -> Result<()> {
     let _sys = System::new();
 
-    // let memory = sys.memory().expect("read error");
-    // println!("CPU: {:#?}", memory);
+    let output = tokio::process::Command::new("bash")
+        .arg("-c")
+        .arg("for i in {0..10}; do echo $i; sleep 1; done")
+        .spawn()?
+        .wait()
+        .await?;
+
+    println!("{:#?}", output);
+
 
     println!("mem ratio: {:#?}", get_mem_ratio()?);
 

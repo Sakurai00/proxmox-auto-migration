@@ -1,22 +1,9 @@
 use anyhow::Result;
 use systemstat::{saturating_sub_bytes, Platform, System};
+use tokio::process::Command;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let _sys = System::new();
-
-    let output = tokio::process::Command::new("bash")
-        .arg("-c")
-        .arg("for i in {0..10}; do echo $i; sleep 1; done")
-        .spawn()?
-        .wait()
-        .await?;
-
-    println!("{:#?}", output);
-
-
-    println!("mem ratio: {:#?}", get_mem_ratio()?);
-
     let sys = System::new();
 
     match sys.cpu_temp() {
@@ -24,9 +11,26 @@ async fn main() -> Result<()> {
         Err(x) => println!("\nCPU temp: {}", x),
     }
 
+    migrate().await;
+
     Ok(())
 }
 
+#[allow(dead_code)]
+async fn migrate() {
+    let _migrate = Command::new("qm")
+        .arg("migrate")
+        .arg("104") // VM ID
+        .arg("RPI02-pve") // target
+        .arg("--online") // live migration
+        .spawn()
+        .expect("migrate command failed to start")
+        .wait()
+        .await
+        .expect("migrate command failed to run");
+}
+
+#[allow(dead_code)]
 fn get_mem_ratio() -> Result<f64> {
     let sys = System::new();
     match sys.memory() {

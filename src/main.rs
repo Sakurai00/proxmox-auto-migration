@@ -12,19 +12,25 @@ async fn main() -> Result<()> {
     println!("Hostname: {}", hostname::get()?.to_string_lossy());
 
     let sys = System::new();
-
     match sys.cpu_temp() {
         Ok(cpu_temp) => println!("\nCPU temp: {}", cpu_temp),
         Err(x) => println!("\nCPU temp: {}", x),
     }
-
     migrate().await;
+
+    //TODO 状態チェックし続ける．閾値を複数回連続で超えたらmigrate
+    /*
+    loop {
+        let count = 0;
+    }
+    */
 
     Ok(())
 }
 
 #[allow(dead_code)]
 async fn migrate() {
+    //TODO 引数でVMIDとtargetを指定できるようにする．
     let _migrate = Command::new("qm")
         .arg("migrate")
         .arg("104") // VM ID

@@ -1,9 +1,16 @@
 use anyhow::Result;
 use systemstat::{saturating_sub_bytes, Platform, System};
 use tokio::process::Command;
+use which::which;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    match which("qm") {
+        Ok(_) => println!("ProxmoxVE Installed"),
+        Err(_) => println!("qm not found"),
+    }
+    println!("Hostname: {}", hostname::get()?.to_string_lossy());
+
     let sys = System::new();
 
     match sys.cpu_temp() {

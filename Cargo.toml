@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.58"
+hostname = "0.3.1"
 systemstat = "0.1.11"
 tokio = { version = "1.20.1", features = ["full"]}
+which = "4.2.5"
 

@@ -11,6 +11,7 @@ async fn main() -> Result<()> {
     }
     println!("Hostname: {}", hostname::get()?.to_string_lossy());
 
+    // test code
     let sys = System::new();
     match sys.cpu_temp() {
         Ok(cpu_temp) => println!("\nCPU temp: {}", cpu_temp),
@@ -19,11 +20,20 @@ async fn main() -> Result<()> {
     migrate().await;
 
     //TODO 状態チェックし続ける．閾値を複数回連続で超えたらmigrate
-    /*
-    loop {
+    /* loop {
         let count = 0;
-    }
-    */
+
+        // 1秒sleep
+
+        if temp > 80 {
+            count += 1;
+        }
+
+        if count >= 10 {
+            migrate();
+            std::process::exit(0)
+        }
+    } */
 
     Ok(())
 }
@@ -31,6 +41,7 @@ async fn main() -> Result<()> {
 #[allow(dead_code)]
 async fn migrate() {
     //TODO 引数でVMIDとtargetを指定できるようにする．
+    //TODO Resultを返す．
     let _migrate = Command::new("qm")
         .arg("migrate")
         .arg("104") // VM ID

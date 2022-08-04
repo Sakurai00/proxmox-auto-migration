@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
         Ok(cpu_temp) => println!("\nCPU temp: {}", cpu_temp),
         Err(x) => println!("\nCPU temp: {}", x),
     }
-    migrate().await;
+    migrate(104, "RPI02-pve").await?;
 
     //TODO 状態チェックし続ける．閾値を複数回連続で超えたらmigrate
     /* loop {
@@ -39,19 +39,21 @@ async fn main() -> Result<()> {
 }
 
 #[allow(dead_code)]
-async fn migrate() {
-    //TODO 引数でVMIDとtargetを指定できるようにする．
-    //TODO Resultを返す．
-    let _migrate = Command::new("qm")
-        .arg("migrate")
-        .arg("104") // VM ID
-        .arg("RPI02-pve") // target
-        .arg("--online") // live migration
+async fn migrate(vmid: i64, target: &str) -> Result<()> {
+    let migrate = Command::new("qm")
+        .args(&["migrate", &vmid.to_string(), target, "--online"])
         .spawn()
         .expect("migrate command failed to start")
         .wait()
         .await
         .expect("migrate command failed to run");
+
+    if migrate.success() {
+        println!("migrate success. VM:{} Target:{}", vmid, target);
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!("migrate error."))
+    }
 }
 
 #[allow(dead_code)]

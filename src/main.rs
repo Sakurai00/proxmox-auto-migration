@@ -1,6 +1,8 @@
 use anyhow::Result;
 use systemstat::{saturating_sub_bytes, Platform, System};
 use tokio::process::Command;
+use tokio::time::sleep;
+use tokio::time::Duration;
 use which::which;
 
 #[tokio::main]
@@ -9,31 +11,27 @@ async fn main() -> Result<()> {
         Ok(_) => println!("ProxmoxVE Installed"),
         Err(_) => println!("qm not found"),
     }
-    println!("Hostname: {}", hostname::get()?.to_string_lossy());
-
-    // test code
-    let sys = System::new();
-    match sys.cpu_temp() {
-        Ok(cpu_temp) => println!("\nCPU temp: {}", cpu_temp),
-        Err(x) => println!("\nCPU temp: {}", x),
+    let hostname = hostname::get()?;
+    if let Some(n) = hostname.to_str() {
+        println!("Hostname: {}", n);
     }
-    migrate(104, "RPI02-pve").await?;
 
-    //TODO 状態チェックし続ける．閾値を複数回連続で超えたらmigrate
-    /* loop {
-        let count = 0;
-
-        // 1秒sleep
-
-        if temp > 80 {
+    let sys = System::new();
+    let mut count = 0;
+    loop {
+        if sys.cpu_temp()? > 80.0 {
             count += 1;
+        } else {
+            count = 0;
         }
 
         if count >= 10 {
-            migrate();
-            std::process::exit(0)
+            migrate(104, "RPI02-pve").await?;
+            break;
         }
-    } */
+
+        sleep(Duration::from_millis(1000)).await;
+    }
 
     Ok(())
 }

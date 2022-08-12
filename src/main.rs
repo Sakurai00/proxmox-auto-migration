@@ -1,4 +1,5 @@
 use anyhow::Result;
+use duct::cmd;
 use systemstat::{saturating_sub_bytes, Platform, System};
 use tokio::process::Command;
 use tokio::time::sleep;
@@ -19,7 +20,10 @@ async fn main() -> Result<()> {
     let sys = System::new();
     let mut count = 0;
     loop {
-        if sys.cpu_temp()? > 80.0 {
+        let cpu_temp = sys.cpu_temp()?;
+        println!("CPU Temp: {}", cpu_temp);
+
+        if cpu_temp > 35.0 {
             count += 1;
         } else {
             count = 0;
@@ -36,17 +40,10 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-#[allow(dead_code)]
 async fn migrate(vmid: i64, target: &str) -> Result<()> {
-    let migrate = Command::new("qm")
-        .args(&["migrate", &vmid.to_string(), target, "--online"])
-        .spawn()
-        .expect("migrate command failed to start")
-        .wait()
-        .await
-        .expect("migrate command failed to run");
+    let migrate = cmd!("qm", "migrate", vmid.to_string(), target, "--online").run()?;
 
-    if migrate.success() {
+    if migrate.status.success() {
         println!("migrate success. VM:{} Target:{}", vmid, target);
         Ok(())
     } else {

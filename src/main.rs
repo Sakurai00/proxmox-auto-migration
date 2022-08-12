@@ -1,30 +1,48 @@
 use anyhow::Result;
 use duct::cmd;
+use log::*;
+use simplelog::*;
+use std::fs::File;
 use systemstat::{saturating_sub_bytes, Platform, System};
-use tokio::process::Command;
 use tokio::time::sleep;
 use tokio::time::Duration;
 use which::which;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Warn,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            File::create("auto_migration.log").unwrap(),
+        ),
+    ])
+    .unwrap();
+
     match which("qm") {
-        Ok(_) => println!("ProxmoxVE Installed"),
-        Err(_) => println!("qm not found"),
+        Ok(_) => info!("ProxmoxVE Installed"),
+        Err(_) => error!("qm not found"),
     }
     let hostname = hostname::get()?;
     if let Some(n) = hostname.to_str() {
-        println!("Hostname: {}", n);
+        info!("Hostname: {}", n);
     }
 
     let sys = System::new();
     let mut count = 0;
     loop {
         let cpu_temp = sys.cpu_temp()?;
-        println!("CPU Temp: {}", cpu_temp);
+        info!("CPU Temp: {}", cpu_temp);
 
         if cpu_temp > 35.0 {
             count += 1;
+            warn!("CPU Temp is Higher than 35.0 Count:{}", count);
         } else {
             count = 0;
         }
@@ -41,13 +59,15 @@ async fn main() -> Result<()> {
 }
 
 async fn migrate(vmid: i64, target: &str) -> Result<()> {
+    info!("Start migration. VM:{} Target:{}", vmid, target);
     let migrate = cmd!("qm", "migrate", vmid.to_string(), target, "--online").run()?;
 
     if migrate.status.success() {
-        println!("migrate success. VM:{} Target:{}", vmid, target);
+        info!("Migration success. VM:{} Target:{}", vmid, target);
         Ok(())
     } else {
-        Err(anyhow::anyhow!("migrate error."))
+        error!("Migration error. VM:{} Target:{}", vmid, target);
+        Err(anyhow::anyhow!("Migrate error."))
     }
 }
 

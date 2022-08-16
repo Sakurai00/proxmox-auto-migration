@@ -1,4 +1,5 @@
 use anyhow::Result;
+use clap::Parser;
 use duct::cmd;
 use log::*;
 use simplelog::*;
@@ -7,6 +8,13 @@ use systemstat::{saturating_sub_bytes, Platform, System};
 use tokio::time::sleep;
 use tokio::time::Duration;
 use which::which;
+
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+struct Cli {
+    #[clap(short, long, value_parser)]
+    target: Option<String>,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,6 +32,8 @@ async fn main() -> Result<()> {
         ),
     ])
     .unwrap();
+
+    let cli = Cli::parse();
 
     match which("qm") {
         Ok(_) => info!("ProxmoxVE Installed"),
@@ -48,7 +58,9 @@ async fn main() -> Result<()> {
         }
 
         if count >= 10 {
-            migrate(104, "RPI02-pve").await?;
+            if let Some(target) = cli.target {
+                migrate(104, target).await?;
+            }
             break;
         }
 
@@ -58,9 +70,9 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn migrate(vmid: i64, target: &str) -> Result<()> {
+async fn migrate(vmid: i64, target: String) -> Result<()> {
     info!("Start migration. VM:{} Target:{}", vmid, target);
-    let migrate = cmd!("qm", "migrate", vmid.to_string(), target, "--online").run()?;
+    let migrate = cmd!("qm", "migrate", vmid.to_string(), &target, "--online").run()?;
 
     if migrate.status.success() {
         info!("Migration success. VM:{} Target:{}", vmid, target);
@@ -82,6 +94,6 @@ fn get_mem_ratio() -> Result<f64> {
             let ratio = used as f64 / total as f64;
             Ok(ratio)
         }
-        Err(x) => return Err(anyhow::anyhow!("memory error: {}", x)),
+        Err(x) => Err(anyhow::anyhow!("memory error: {}", x)),
     }
 }

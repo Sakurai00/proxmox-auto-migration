@@ -49,13 +49,15 @@ async fn main() -> Result<()> {
 
     let sys = System::new();
     let mut count = 0;
+    let threshold = 35.0;
+
     loop {
         let cpu_temp = sys.cpu_temp()?;
         info!("CPU Temp: {}", cpu_temp);
 
-        if cpu_temp > 35.0 {
+        if cpu_temp > threshold {
             count += 1;
-            warn!("CPU Temp is Higher than 35.0 Count:{}", count);
+            warn!("CPU Temp is Higher than {} Count:{}", threshold, count);
         } else {
             count = 0;
         }

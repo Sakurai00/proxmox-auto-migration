@@ -13,7 +13,10 @@ use which::which;
 #[clap(author, version, about, long_about = None)]
 struct Cli {
     #[clap(short, long, value_parser)]
-    target: Option<String>,
+    target: String,
+
+    #[clap(short, long, value_parser)]
+    id: i64,
 }
 
 #[tokio::main]
@@ -58,9 +61,7 @@ async fn main() -> Result<()> {
         }
 
         if count >= 10 {
-            if let Some(target) = cli.target {
-                migrate(104, target).await?;
-            }
+            migrate(cli.id, cli.target).await?;
             break;
         }
 

@@ -23,7 +23,7 @@ struct Cli {
 async fn main() -> Result<()> {
     CombinedLogger::init(vec![
         TermLogger::new(
-            LevelFilter::Warn,
+            LevelFilter::Info,
             Config::default(),
             TerminalMode::Mixed,
             ColorChoice::Auto,
@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
 
     let sys = System::new();
     let mut count = 0;
-    let threshold = 35.0;
+    let threshold = 50.0;
 
     loop {
         let cpu_temp = sys.cpu_temp()?;
